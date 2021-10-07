@@ -1,3 +1,31 @@
+"""
+Created on Tue Jul  6 21:04:40 2021
+
+@authors: Sam Dawley // Tristan Kooistra
+
+conda environment configuration
+python 3.7 interpreter or greater
+dependencies:
+numpy
+scipy
+matplotlib
+pandas
+openpyxl
+
+"""
+
+import getpass
+import pandas as pd
+import numpy as np
+import scipy.spatial as spatial
+import matplotlib.cm
+import matplotlib.pyplot as plt
+import matplotlib.path as mpath
+import matplotlib.patches as mpatches
+from matplotlib.ticker import FixedLocator
+import math
+from scipy.spatial import Delaunay
+
 def make_voronoi(file):
     """
     Parameters

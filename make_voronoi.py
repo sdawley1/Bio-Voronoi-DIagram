@@ -39,7 +39,7 @@ def make_voronoi(file):
     Complete colored voronoi diagram
     """
     
-# Import data from excel file and convert to numpy array
+    # Import data from excel file and convert to numpy array
     data = pd.read_excel(r"{0}/{1}.xlsx".format(file_path(), file), header=None)
     data.to_numpy()
     coords = np.array(data)
@@ -47,15 +47,13 @@ def make_voronoi(file):
     ys = coords[:, 1]
     center = ((max(xs)+min(xs))/2, (max(ys)+min(ys))/2)
     
-# Extract Delaunay triangulation and convex hull from data set to be
-# used later for masking 
+    # Extract Delaunay triangulation and convex hull from data set to be
+    # used later for masking 
     delaunay: Delaunay = spatial.Delaunay(data)
     hull = spatial.ConvexHull(data)
-    #bar.update(1)
     
-#Find minimum cell to cell distance
+    #Find minimum cell to cell distance
     if min_dists:
-        #pbar2 = ProgressBar().start()
         min_cell_to_cell = np.zeros(len(delaunay.points))
         for ii, vv in enumerate(delaunay.points):
             all_simp_verts = find_neighbors(ii, delaunay)
@@ -67,15 +65,14 @@ def make_voronoi(file):
                 dist = np.linalg.norm(pt_pt - pt_simp)
                 dists.append(dist/scale)
                 min_cell_to_cell[ii] = min(dists)
-        #pbar2.finish()
         df = pd.DataFrame(min_cell_to_cell)
         df.to_excel("{0}/{1}_minDist.xlsx".format(results_path, file), header=False, index=False)
     
-# Uses voronoi_volumes function to compute the areas of all cells 
-# made in the voronoi diagram. Appends all areas to a list and 
-# finds the maximum and minimum of the list to be used for the 
-# normalization of the color map. Notice that maxima is changed
-# by a scalar to make the coloring nicer
+    # Uses voronoi_volumes function to compute the areas of all cells 
+    # made in the voronoi diagram. Appends all areas to a list and 
+    # finds the maximum and minimum of the list to be used for the 
+    # normalization of the color map. Notice that maxima is changed
+    # by a scalar to make the coloring nicer
     vols, indices = voronoi_volumes(data)
     areas = []
     for element in vols:
@@ -85,11 +82,10 @@ def make_voronoi(file):
     lookout = find_max(areas2)
     minima = min(areas2)
     maxima = max_value_scale_factor*lookout
-    #bar.update(2)
     df = pd.DataFrame(areas2)
     df.to_excel("{0}/{1}_areas.xlsx".format(results_path, file), header=False, index=False)
     
-# Normalizing the color map of the diagram
+    # Normalizing the color map of the diagram
     norm = color_norm_type(
         vmin=minima,
         vmax=maxima,
@@ -100,7 +96,7 @@ def make_voronoi(file):
         cmap=color_map
         )
     
-# Normalizing the color map of the color bar 
+    # Normalizing the color map of the color bar 
     color_bar_norm = matplotlib.colors.Normalize(
         vmin=100,
         vmax=maxima,
@@ -111,9 +107,8 @@ def make_voronoi(file):
         cmap=color_map
         )
     color_bar_mapper.set_clim(min(areas2)-1000, find_max(areas2)+1000)
-    #bar.update(3)
     
-# Creating the voronoi figure
+    # Creating the voronoi figure
     fig, ax = plt.subplots()
     vor = spatial.Voronoi(
         data,
@@ -137,8 +132,8 @@ def make_voronoi(file):
     plt.tick_params(left=False, bottom=False)
     plt.title(plot_title)
     
-# Calculating areas of voronoi cells and coloring them
-# with the color map defined above
+    # Calculating areas of voronoi cells and coloring them
+    # with the color map defined above
     polygons = []
     for reg in regions_st:
         polygon = vertices_st[reg]
@@ -150,7 +145,7 @@ def make_voronoi(file):
            area_p = shoelace(polygon)
            plt.fill(*zip(*polygon), clip_on=True, color=mapper.to_rgba(area_p))
     
-# Creating path on ConvexHull
+    # Creating path on ConvexHull
     hull_vertices = []
     hull_codes = [mpath.Path.MOVETO]
     for n in hull.vertices:
@@ -160,7 +155,7 @@ def make_voronoi(file):
     hull_codes.remove(mpath.Path.CURVE4)
     hull_codes.append(mpath.Path.CLOSEPOLY)
     
-# Creating path on circle
+    # Creating path on circle
     circ_path = matplotlib.path.Path.circle(
         center,
         radius=center[0]*circ_scale
@@ -169,19 +164,19 @@ def make_voronoi(file):
     circ_path_codes.extend([mpath.Path.CURVE4 for n in range(len(circ_path.vertices)-2)])
     circ_path_codes.append(mpath.Path.CLOSEPOLY)
         
-# Creating path on rectangle surrounding entire figure
+    # Creating path on rectangle surrounding entire figure
     rect_vertices = [(-1000, -1000), (9000, -1000), (9000, 9000), (-1000, 9000)]
     rect_codes = [mpath.Path.LINETO for p in range(len(rect_vertices))]
     rect_codes[0] = mpath.Path.MOVETO
     
-# Concatenating list of hull vertices and rectangle vertices
+    # Concatenating list of hull vertices and rectangle vertices
     verts_all = []
     if convex:
         verts_all.extend(hull_vertices)
     else:
         verts_all.extend(circ_path.vertices)
     verts_all.extend(rect_vertices[::-1])
-# Concatenating list of hull codes and rectangle codes
+    # Concatenating list of hull codes and rectangle codes
     codes_all = []
     if convex:
         codes_all.extend(hull_codes)
@@ -189,10 +184,10 @@ def make_voronoi(file):
         codes_all.extend(circ_path_codes)
     codes_all.extend(rect_codes)
     
-# Creating paths from vertices and codes made above
+    # Creating paths from vertices and codes made above
     path_all = matplotlib.path.Path(verts_all, codes_all)
 
-# Creating patches from paths above. Patches will act as masks
+    # Creating patches from paths above. Patches will act as masks
     patch_all = mpatches.PathPatch(
         path_all,
         fc=line_color_plus_background_color,
@@ -200,7 +195,7 @@ def make_voronoi(file):
         )
     plt.gca().add_patch(patch_all)
     
-# Making color bar 
+    # Making color bar 
     if color_bar_visibility:
         cbar = plt.colorbar(color_bar_mapper, shrink=0.75)
         cbar.set_ticks([p*find_max(areas2)/6 for p in range(7)])
@@ -217,14 +212,14 @@ def make_voronoi(file):
         cbar.ax.xaxis.set_tick_params(pad=20)
         cbar.set_label("", labelpad=+80, size=50, rotation=270)
 
-# Setting axis parameters
+    # Setting axis parameters
     ax.axis(axis_visibility)
     ax.spines["right"].set_visible(False)
     ax.spines["top"].set_visible(False)
     ax_labels = ["{0} \u03BCm".format(1000*m) for m in range(7)] # Labeling tick labels at every 1000 microns
     ax_labels.append("")
     
-# Major tick parameters
+    # Major tick parameters
     ax.tick_params(
         which="major",
         direction="inout",
@@ -233,7 +228,7 @@ def make_voronoi(file):
         color="k",
         pad=15
         )
-# Minor tick parameters
+    # Minor tick parameters
     ax.tick_params(
         which="minor",
         direction="inout",
@@ -252,7 +247,7 @@ def make_voronoi(file):
             labelleft=True
             )
         
-# x-Axis specific parameters
+    # x-Axis specific parameters
     ax.spines["bottom"].set_visible(x_axis_visibility)
     if x_axis_visibility:
         ax.spines["bottom"].set_bounds(0, max(xs))
@@ -263,7 +258,7 @@ def make_voronoi(file):
     else:
         ax.tick_params(axis="x", color="w", labelbottom=False)
         
-# y-Axis specific parameters
+    # y-Axis specific parameters
     ax.spines["left"].set_visible(y_axis_visibility)
     if y_axis_visibility:
         ax.spines["left"].set_bounds(0, max(ys))
@@ -274,7 +269,7 @@ def make_voronoi(file):
     else:
         ax.tick_params(axis="y", color="w", labelleft=False)
         
-# Minor tick mark placement
+    # Minor tick mark placement
     minor_ticks_x = [p*max(xs)/6.5*(2*p-1)/(2*p) for p in range(1,7)]
     minor_ticks_x.append(max(xs))
     minor_ticks_y = [p*max(ys)/6.5 for p in range(7)]
@@ -282,10 +277,9 @@ def make_voronoi(file):
     ax.xaxis.set_minor_locator(FixedLocator(minor_ticks_x))
     ax.yaxis.set_minor_locator(FixedLocator(minor_ticks_y[::-1]))
 
-# Finishing diagram and plotting
+    # Finishing diagram and plotting
     plt.gca().invert_yaxis()
     plt.savefig("{0}/{1}_voronoi.pdf".format(fig_path, file))
-    #plt.show()
     print("Plot finished.")
     return
     
